@@ -12,6 +12,8 @@
   let typewriterTimeout = null;
   let disappearTimeout = null;
 
+  let cachedStream = null; 
+
   function typewrite(text) {
     displayText = '';
     let i = 0;
@@ -116,13 +118,17 @@
   async function startRecording() {
     error.set('');
     displayText = '';
-    micState.set('recording'); // change icon instantly
+    micState.set('recording');
 
-    // let UI render first, then request permission
     await new Promise(resolve => setTimeout(resolve, 50));
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // reuse existing stream if still active
+      if (!cachedStream || !cachedStream.active) {
+        cachedStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      }
+
+      const stream = cachedStream;
 
       const mimeTypes = [
         'audio/mp4',
@@ -150,7 +156,6 @@
       };
 
       mediaRecorder.onstop = async () => {
-        stream.getTracks().forEach(t => t.stop());
         clearInterval(timerInterval);
         seconds = 0;
         micState.set('processing');
@@ -159,7 +164,7 @@
           const blob = new Blob(audioChunks, { type: mimeType || 'audio/mp4' });
           const result = await transcribeAudio(blob);
           transcript.set(result);
-          typewrite(result.text); 
+          typewrite(result.text);
           micState.set('idle');
         } catch (e) {
           error.set(e.message);
