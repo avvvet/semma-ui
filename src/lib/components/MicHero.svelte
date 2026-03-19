@@ -32,9 +32,9 @@
     next();
   }
 
-  $: if ($transcript.text) {
-    typewrite($transcript.text);
-  }
+  // $: if ($transcript.text) {
+  //   typewrite($transcript.text);
+  // }
 
   function formatTime(s) {
     const m = Math.floor(s / 60);
@@ -159,6 +159,7 @@
           const blob = new Blob(audioChunks, { type: mimeType || 'audio/mp4' });
           const result = await transcribeAudio(blob);
           transcript.set(result);
+          typewrite(result.text); 
           micState.set('idle');
         } catch (e) {
           error.set(e.message);
