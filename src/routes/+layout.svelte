@@ -39,7 +39,7 @@
 
   <footer>
     <div class="footer-inner">
-      <span class="footer-text">model in active development. Accuracy improves with every iteration. <strong>Early access</strong></span>
+      <span class="footer-text">we are <strong>Yisak · Nafiad · Nardos · Awet</strong> - model in active development. </span>
       <div class="footer-zoo">
         <span class="animal-bubble" style="z-index:3">🦒</span>
         <span class="animal-bubble" style="z-index:2; margin-left:-10px">🐘</span>

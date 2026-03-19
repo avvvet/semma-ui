@@ -435,7 +435,7 @@
     font-family: 'Inter', sans-serif;
     font-size: 0.78rem;
     color: rgba(255, 255, 255, 0.18);
-    margin: 0;
+    margin: 40px;
     letter-spacing: 0.06em;
   }
 
