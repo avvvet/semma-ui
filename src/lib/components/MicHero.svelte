@@ -116,13 +116,10 @@
   async function startRecording() {
     error.set('');
     displayText = '';
-    micState.set('permission');
+    micState.set('recording'); // show recording UI immediately
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      
-      // show recording UI immediately
-      micState.set('recording');
 
       const mimeTypes = [
         'audio/mp4',
