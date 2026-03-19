@@ -42,6 +42,77 @@
     return `${m}:${sec.toString().padStart(2, '0')}`;
   }
 
+  // async function startRecording() {
+  //   error.set('');
+  //   displayText = '';
+  //   micState.set('permission');
+
+  //   try {
+  //     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  //     micState.set('recording');
+
+  //     const mimeTypes = [
+  //       'audio/webm;codecs=opus',
+  //       'audio/mp4',
+  //       'audio/ogg;codecs=opus',
+  //       'audio/webm'
+  //     ];
+  //     const mimeType = mimeTypes.find(t => MediaRecorder.isTypeSupported(t)) || '';
+
+  //     mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : {});
+  //     audioChunks = [];
+
+  //     // mediaRecorder.ondataavailable = (e) => {
+  //     //   if (e.data.size > 0) audioChunks.push(e.data);
+  //     // };
+
+  //     mediaRecorder.onstop = async () => {
+  //       stream.getTracks().forEach(t => t.stop());
+  //       clearInterval(timerInterval);
+  //       seconds = 0;
+  //       micState.set('processing');
+
+  //       try {
+  //         const blob = new Blob(audioChunks, { type: mimeType || 'audio/webm' });
+  //         const result = await transcribeAudio(blob);
+  //         transcript.set(result);
+  //         micState.set('idle');
+  //       } catch (e) {
+  //         error.set(e.message);
+  //         micState.set('idle');
+  //       }
+  //     };
+
+  //     // mediaRecorder.start();
+
+  //     // timerInterval = setInterval(() => {
+  //     //   seconds += 1;
+  //     //   if (seconds >= MAX_SECONDS) stopRecording();
+  //     // }, 1000);
+
+  //     mediaRecorder.start(1000); // collect data every 1 second
+
+  //     // start timer only when first data arrives
+  //     let timerStarted = false;
+  //     mediaRecorder.ondataavailable = (e) => {
+  //       if (e.data.size > 0) {
+  //         audioChunks.push(e.data);
+  //         if (!timerStarted) {
+  //           timerStarted = true;
+  //           timerInterval = setInterval(() => {
+  //             seconds += 1;
+  //             if (seconds >= MAX_SECONDS) stopRecording();
+  //           }, 1000);
+  //         }
+  //       }
+  //     };
+
+  //   } catch (e) {
+  //     error.set('Microphone access denied');
+  //     micState.set('idle');
+  //   }
+  // }
+
   async function startRecording() {
     error.set('');
     displayText = '';
@@ -49,11 +120,24 @@
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+      // wait for stream to be active — fixes iOS Safari delay
+      await new Promise(resolve => {
+        if (stream.active) {
+          resolve();
+        } else {
+          stream.addEventListener('active', resolve, { once: true });
+        }
+      });
+
+      // small additional delay for iOS Safari
+      await new Promise(resolve => setTimeout(resolve, 300));
+
       micState.set('recording');
 
       const mimeTypes = [
+        'audio/mp4',                 // iOS Safari prefers mp4
         'audio/webm;codecs=opus',
-        'audio/mp4',
         'audio/ogg;codecs=opus',
         'audio/webm'
       ];
@@ -62,38 +146,8 @@
       mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : {});
       audioChunks = [];
 
-      // mediaRecorder.ondataavailable = (e) => {
-      //   if (e.data.size > 0) audioChunks.push(e.data);
-      // };
-
-      mediaRecorder.onstop = async () => {
-        stream.getTracks().forEach(t => t.stop());
-        clearInterval(timerInterval);
-        seconds = 0;
-        micState.set('processing');
-
-        try {
-          const blob = new Blob(audioChunks, { type: mimeType || 'audio/webm' });
-          const result = await transcribeAudio(blob);
-          transcript.set(result);
-          micState.set('idle');
-        } catch (e) {
-          error.set(e.message);
-          micState.set('idle');
-        }
-      };
-
-      // mediaRecorder.start();
-
-      // timerInterval = setInterval(() => {
-      //   seconds += 1;
-      //   if (seconds >= MAX_SECONDS) stopRecording();
-      // }, 1000);
-
-      mediaRecorder.start(1000); // collect data every 1 second
-
-      // start timer only when first data arrives
       let timerStarted = false;
+
       mediaRecorder.ondataavailable = (e) => {
         if (e.data.size > 0) {
           audioChunks.push(e.data);
@@ -106,6 +160,25 @@
           }
         }
       };
+
+      mediaRecorder.onstop = async () => {
+        stream.getTracks().forEach(t => t.stop());
+        clearInterval(timerInterval);
+        seconds = 0;
+        micState.set('processing');
+
+        try {
+          const blob = new Blob(audioChunks, { type: mimeType || 'audio/mp4' });
+          const result = await transcribeAudio(blob);
+          transcript.set(result);
+          micState.set('idle');
+        } catch (e) {
+          error.set(e.message);
+          micState.set('idle');
+        }
+      };
+
+      mediaRecorder.start(1000); // collect data every 1 second
 
     } catch (e) {
       error.set('Microphone access denied');
