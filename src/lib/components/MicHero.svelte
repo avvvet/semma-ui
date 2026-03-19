@@ -62,9 +62,9 @@
       mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : {});
       audioChunks = [];
 
-      mediaRecorder.ondataavailable = (e) => {
-        if (e.data.size > 0) audioChunks.push(e.data);
-      };
+      // mediaRecorder.ondataavailable = (e) => {
+      //   if (e.data.size > 0) audioChunks.push(e.data);
+      // };
 
       mediaRecorder.onstop = async () => {
         stream.getTracks().forEach(t => t.stop());
@@ -83,12 +83,29 @@
         }
       };
 
-      mediaRecorder.start();
+      // mediaRecorder.start();
 
-      timerInterval = setInterval(() => {
-        seconds += 1;
-        if (seconds >= MAX_SECONDS) stopRecording();
-      }, 1000);
+      // timerInterval = setInterval(() => {
+      //   seconds += 1;
+      //   if (seconds >= MAX_SECONDS) stopRecording();
+      // }, 1000);
+
+      mediaRecorder.start(1000); // collect data every 1 second
+
+      // start timer only when first data arrives
+      let timerStarted = false;
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) {
+          audioChunks.push(e.data);
+          if (!timerStarted) {
+            timerStarted = true;
+            timerInterval = setInterval(() => {
+              seconds += 1;
+              if (seconds >= MAX_SECONDS) stopRecording();
+            }, 1000);
+          }
+        }
+      };
 
     } catch (e) {
       error.set('Microphone access denied');

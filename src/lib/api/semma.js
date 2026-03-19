@@ -1,4 +1,5 @@
-const API_URL = 'http://localhost:3000';
+const API_URL = 'https://upupgo.online';
+//const API_URL = 'http://localhost:3000';
 
 export async function transcribeAudio(audioBlob) {
   const formData = new FormData();
