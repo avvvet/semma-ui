@@ -120,23 +120,12 @@
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-
-      // wait for stream to be active — fixes iOS Safari delay
-      await new Promise(resolve => {
-        if (stream.active) {
-          resolve();
-        } else {
-          stream.addEventListener('active', resolve, { once: true });
-        }
-      });
-
-      // small additional delay for iOS Safari
-      await new Promise(resolve => setTimeout(resolve, 300));
-
+      
+      // show recording UI immediately
       micState.set('recording');
 
       const mimeTypes = [
-        'audio/mp4',                 // iOS Safari prefers mp4
+        'audio/mp4',
         'audio/webm;codecs=opus',
         'audio/ogg;codecs=opus',
         'audio/webm'
@@ -145,7 +134,6 @@
 
       mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : {});
       audioChunks = [];
-
       let timerStarted = false;
 
       mediaRecorder.ondataavailable = (e) => {
@@ -178,7 +166,7 @@
         }
       };
 
-      mediaRecorder.start(1000); // collect data every 1 second
+      mediaRecorder.start(1000);
 
     } catch (e) {
       error.set('Microphone access denied');
@@ -187,6 +175,7 @@
   }
 
   function stopRecording() {
+    micState.set('processing');
     if (mediaRecorder && mediaRecorder.state !== 'inactive') {
       mediaRecorder.stop();
     }
