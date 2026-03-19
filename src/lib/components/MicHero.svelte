@@ -116,7 +116,10 @@
   async function startRecording() {
     error.set('');
     displayText = '';
-    micState.set('recording'); // show recording UI immediately
+    micState.set('recording'); // change icon instantly
+
+    // let UI render first, then request permission
+    await new Promise(resolve => setTimeout(resolve, 50));
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -172,10 +175,16 @@
   }
 
   function stopRecording() {
-    micState.set('processing');
-    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-      mediaRecorder.stop();
-    }
+    micState.set('processing'); // change icon instantly
+    seconds = 0;
+    clearInterval(timerInterval);
+    
+    // let UI render first, then stop recorder
+    setTimeout(() => {
+      if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+        mediaRecorder.stop();
+      }
+    }, 50);
   }
 </script>
 
